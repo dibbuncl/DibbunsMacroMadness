@@ -53,11 +53,22 @@ a bunch of tests, wired up to hotkeys in the numpad. Should be pretty easy to ru
 If you want to run them all, you may use the /runalltests command. There are also /runtest1, /runtest2, 
 etc. wired up to approprate Numpad-\<test number\> hot keys.
 
-### Test0
+#### Test0
 Test 0 is a special test to make sure you can test. It verifies basic if end if is working 
 and you can call message. Since if basic test machinery is broken, it can't really verify itself,
 you will need to look to the comments in that test and make sure the output of the test is 
 what it should be. If test0 is not working, then the rest of the tests are invalid.
+
+#### Test1
+This tests arithmetic for integers and strings
+
+#### Test2 
+This tests control flow from goto/label, call, recursion and local variable scope.
+
+> BUG: In the legacy clanlord client (2006), local variables have global scope.
+
+#### Tests 3-9
+	TBD
 
 ### Results reporting
 The /runalltests should sum up results and provide a summary string, which you may
@@ -68,11 +79,13 @@ report in Clanlord discord or other places as desired for marketing purposes.
 
 a. **IMPORTANT!!** You probably didn't clone with --recurse-submodules. 
     	To fix, do this in the terminal:
-        
-> `cd` _\<path/to/DibbunsMacroMadness\>_
+ 
+```       
+		> git clone git@github.com:dibbuncl/DibbunsMacroMadness.git    // you did this part already!
+		> cd DibbunsMacroMadness
+		> git submodule update --init --recursive`
+```
 
-> `git submodule update --init --recursive`
-        
 > This will cause YappyGM's Clanlord code to be downloaded and put in the Clanlord 
         directory. It is needed to build the app.
         
@@ -133,6 +146,7 @@ See also the MacroGotchas.md in this repository for some commentary for places w
 
 ## Other Resources
 [Telta Tao Macro Manual](https://www.deltatao.com/clanlord/macros/manual.html)
+
 [Gorvin's Macros](http://gorvin.50webs.com/macros/index.html)
 
 ## TODO:
@@ -141,6 +155,6 @@ See also the MacroGotchas.md in this repository for some commentary for places w
 
 ## KNOWN BUGS
 1. Reloading in a macros file seems to trigger some caching down in CL somewhere that prevents changes from being observed.
-    I haven't taken the time to track this down yet. 
+    I haven't taken the time to track this down yet. For now, relaunch the app.
 
 
