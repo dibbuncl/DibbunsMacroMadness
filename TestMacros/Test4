@@ -1,0 +1,10 @@
+include "TestHarness"
+
+Test4
+{
+    setglobal gTestName "Test4"
+    call BeginTests
+
+    call EndTests
+}
+

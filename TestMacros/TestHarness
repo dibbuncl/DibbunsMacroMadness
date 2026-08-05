@@ -1,0 +1,162 @@
+
+
+
+setglobal gTestLevel        0
+setglobal gTestCount        0
+setglobal gTestsPassed      0
+setglobal gTestName         ""
+
+setglobal gLocalTestName    ""
+setglobal gLocalTestErrors  0
+
+
+// ABI for function argument passing
+setglobal gABIStringReturn  ""
+setglobal gABIIntReturn     0
+setglobal gABIStringArg1    ""
+setglobal gABIStringArg2    ""
+setglobal gABIIntArg1       0
+setglobal gABIIntArg2       0
+setglobal gABIExpectedStringReturn ""
+setglobal gABIExpectedIntReturn     0
+
+// Call before running a set of local tests
+BeginTests
+{
+    // Make sure we can print
+    setglobal @env.debug true
+    
+    // Make sure the tests run to completion
+    // The DT client's 5 tick timeout (1/12th second) is a bit short on a game than never exceeds 4 fps (1/4 second).
+    // In any event, we need more time for testing.
+    setglobal @env.unfriendly true
+    
+    if 0 == gTestLevel
+        setglobal gIstTestRunning 0
+        setglobal gTestCount 0
+        setglobal gTestsPassed 0
+    end if
+
+    // Clear Arg ABI so another test doesn't interfere
+    setglobal gABIStringArg1            ""
+    setglobal gABIStringArg2            ""
+    setglobal gABIIntArg1               0
+    setglobal gABIIntArg2               0
+
+    // Clear Return ABI so another test doesn't interfere
+    setglobal gABIStringReturn          ""
+    setglobal gABIExpectedStringReturn  ""
+    setglobal gABIIntReturn             0
+    setglobal gABIExpectedIntReturn     0
+    
+    // Starting a new test, so no local test errors
+    setglobal gLocalTestErrors          0
+    setglobal gLocalTestName            ""
+
+    // Mark that we have started testing
+    setglobal gTestLevel + 1
+}
+
+// Call After running a set of local tests
+EndTests
+{
+    if gTestLevel < 1
+        message "Internal Error: More calls to EndTest than Begin Test\r"
+        goto EndTest_Exit
+    else
+        setglobal gTestLevel - 1
+        if gTestLevel > 0
+            goto EndTest_Exit
+        end if
+
+        message "Passed " gTestsPassed " of " gTestCount " tests. \r"
+        if gTestCount == gTestsPassed
+            message "ALL" gTestName "TESTS PASSED!\r"
+        else
+            set failures::EndTest  gTestCount
+            set failures::EndTest - gTestsPassed
+            message gTestName "    " failures::EndTest " tests failed.\r"
+            
+            if gTestName == "Test0"
+                message "*** Test0 must pass all tests or all other results are invalid.\r"
+                message "*** NO FURTHER TEST RESULTS ARE VALID ***\r"
+            end if
+        end if
+    end if
+    
+    label EndTest_Exit
+}
+
+VerifyResult
+{
+    set problemsFound::VerifyResult     0
+    
+    message "    Checking " gLocalTestName "...\r"
+    
+//Internal verification we managed to name the test
+    if "" == gTestName
+        message "Internal Error: gTestName not set\r"
+        set problemsFound::VerifyResult + 1
+    end if
+
+    if "" == gLocalTestName
+        message "Internal Error: gLocalTestName not set\r"
+        set problemsFound::VerifyResult + 1
+    end if
+
+//Internal verification the test is following ABI
+    if gABIStringArg1 != ""
+        message "Internal Error: gABIStringArg1 is not \"\"\r"
+        set problemsFound::VerifyResult + 1
+    end if
+
+    if gABIStringArg2 != ""
+        message "Internal Error: gABIStringArg2 is not \"\"\r"
+        set problemsFound::VerifyResult + 1
+    end if
+
+    if gABIIntArg1 != 0
+        message "Internal Error: gABIIntArg1 is not 0\r"
+        set problemsFound::VerifyResult + 1
+    end if
+
+    if gABIIntArg2 != 0
+        message "Internal Error: gABIIntArg2 is not 0\r"
+        set problemsFound::VerifyResult + 1
+    end if
+
+// Check test result
+    if gABIStringReturn != gABIExpectedStringReturn
+        message "* Error: expected string result \"" gABIExpectedStringReturn "\"\r"
+        message "              got string result \"" gABIStringReturn "\"\r"
+        set problemsFound::VerifyResult + 1
+    end if
+
+    if gABIIntReturn != gABIExpectedIntReturn
+        message "* Error: expected integer result \"" gABIExpectedIntReturn "\"\r"
+        message "              got integer result \"" gABIIntReturn "\"\r"
+        set problemsFound::VerifyResult + 1
+    end if
+
+// Accumulate results
+    if 0 == problemsFound::VerifyResult
+        setglobal gTestsPassed + 1
+    else
+        message "*** " problemsFound::VerifyResult " problems found. Test failed.\r"
+    end if
+        
+    setglobal gTestCount + 1
+
+    // Clear Arg ABI so another test doesn't interfere
+    setglobal gABIStringArg1            ""
+    setglobal gABIStringArg2            ""
+    setglobal gABIIntArg1               0
+    setglobal gABIIntArg2               0
+
+    // Clear Return ABI so another test doesn't interfere
+    setglobal gABIStringReturn          ""
+    setglobal gABIExpectedStringReturn  ""
+    setglobal gABIIntReturn             0
+    setglobal gABIExpectedIntReturn     0
+    setglobal gLocalTestName            ""
+}

@@ -1,0 +1,66 @@
+
+// This file should cause some warnings and errors when you load it
+// The CL macro language lets a lot of stuf silently fail, which is
+// a debugging problem
+
+setglobal arg 	0
+set arg1	1		// Error: set outside of function scope
+setglobal arg2 	2
+
+// These are things that you ought to warn about or flag as errors
+Gotchas
+{
+	if
+	endif		// space missing
+
+	set arg 0	// local variable arg hides global variable arg
+
+	arg + 1		// set (or setglobal) missing. Has no effect
+ 
+ /*
+    As we see in this macro language example from DTs manual, sometimes these "do nothing"
+    lines actually are commands for the character to say something.
+
+        // Outputs 1, 5, 6, and 11. Your character will say each result aloud
+        // (i.e. in a plain text bubble).
+        f8
+        {
+          set num 1  // the value of ‘num’ is now 1
+          num "\r"
+          set num + 4  // adds 4 to ‘num’, which is now 5
+          num "\r"
+          set num2 6  // ‘num2’ has the value 6
+          num2 "\r"
+          set num + num2  // adds 6 to num, yielding 11
+          num "\r"
+        }
+        
+        These also can be broken up over multiple lines:
+        
+        "grfem"
+        {
+          "Hello fair lady "
+          @text         // @text is the complete text in the typing box when the macro started (minus the expression of an expression macro).
+          "!\r"
+        }
+    */
+	
+	message "This message is strange /r really strange"	// really strange will be ignored
+
+	set arg arg1 + arg2	// only set <arg0> <arg1> and set <arg> .op. <arg1> forms allowed. Can not do arithmetic likes this
+				// Should be done as:  
+				//		set arg arg1
+				//		set arg + arg2
+
+	message "This message has some " arg1 + arg2 " math in it\r"	// error: can only do math in set and setglobal lines
+	message "THis message has a different" + "operator\r"		// error: operators only usable in set and setglobal lines
+	"command issued " arg1 + arg2 " times\r"			// error: can only do math in set and setglobal lines
+
+	if arg < arg1 + arg2 						// error: can only do math in set and setglobal lines
+	end if
+ 
+    setglobal 1         // 1 isnt a global. Its a literal
+    setglobal arg       // nothing to set arg to
+
+}
+

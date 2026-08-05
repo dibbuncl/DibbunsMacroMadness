@@ -1,0 +1,211 @@
+include "TestHarness"
+
+// This is a simple sanity test to let us know whether
+// we can do simple activities needed by TestHarness to run tests
+// If we can't pass this, then the other tests are invalid
+Test0
+{
+    setglobal gTestName "Test0"
+    call BeginTests
+    
+// Can we print out a simple message?
+    call Test0MessageSimple
+    call VerifyResult
+    
+// Can we set a global
+    setglobal gABIStringArg  ""
+
+// Try some comments
+    setglobal gABIIntArg 0
+    call Test0Comments
+    call VerifyResult
+
+// Can we do both?
+    setglobal gABIStringArg1 "MUST BE"
+    call Test0MessageStringArg
+    call VerifyResult
+    
+    setglobal gABIIntArg1 11
+    call Test0MessageIntArg
+    call VerifyResult
+
+
+// Can we test equivalence and non-equivalence
+    message "42 == 42\r"
+    setglobal gABIIntArg1   42
+    setglobal gABIIntArg2   42
+    call Test0EquivalenceOperatorInt
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "42 == 41\r"
+    setglobal gABIIntArg1   42
+    setglobal gABIIntArg2   41
+    call Test0EquivalenceOperatorInt
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "42 != 42\r"
+    setglobal gABIIntArg1   42
+    setglobal gABIIntArg2   42
+    call Test0NonEquivalenceOperatorInt
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "42 != 41\r"
+    setglobal gABIIntArg1   42
+    setglobal gABIIntArg2   41
+    call Test0NonEquivalenceOperatorInt
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "\"42\" == \"42\"\r"
+    setglobal gABIStringArg1   "42"
+    setglobal gABIStringArg2   "42"
+    call Test0EquivalenceOperatorString
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "\"42\" == \"41\"\r"
+    setglobal gABIStringArg1   "42"
+    setglobal gABIStringArg2   "41"
+    call Test0EquivalenceOperatorString
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "\"42\" != \"42\" \r"
+    setglobal gABIStringArg1   "42"
+    setglobal gABIStringArg2   "42"
+    call Test0NonEquivalenceOperatorString
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "\"42\" != \"41\"\r"
+    setglobal gABIStringArg1   "42"
+    setglobal gABIStringArg2   "41"
+    call Test0NonEquivalenceOperatorString
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    call EndTests
+}
+
+Test0MessageSimple
+{
+    setglobal gLocalTestName "Test0MessageSimple"
+
+    message "This string must be printed out for the results to be valid.\r"
+}
+
+Test0MessageStringArg
+{
+    // Stack setup
+    setglobal gLocalTestName "Test0MessageStringArg"
+    
+    message "This string " gABIStringArg1 " printed out for the results to be valid.\r"
+
+    // Stack teardown
+    setglobal gABIStringArg1 ""
+    setglobal gABIStringArg2 ""
+}
+
+Test0MessageIntArg
+{
+    // Stack setup
+    setglobal gLocalTestName "Test0MessageIntArg"
+
+    message "This string must print 11 here: " gABIIntArg1 "\r"
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+
+Test0EquivalenceOperatorInt
+{
+    // Stack setup
+    setglobal gLocalTestName "Test0EquivalenceOperatorInt"
+
+    if gABIIntArg1 == gABIIntArg2
+        setglobal gABIIntReturn 1
+    else
+        setglobal gABIIntReturn 0
+    end if
+    
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test0NonEquivalenceOperatorInt
+{
+    // Stack setup
+    setglobal gLocalTestName "Test0NonEquivalenceOperatorInt"
+
+    if gABIIntArg1 != gABIIntArg2
+        setglobal gABIIntReturn 1
+    else
+        setglobal gABIIntReturn 0
+    end if
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test0EquivalenceOperatorString
+{
+    // Stack setup
+    setglobal gLocalTestName "Test0EquivalenceOperatorString"
+
+    if gABIStringArg1 == gABIStringArg2
+        setglobal gABIIntReturn 1
+    else
+        setglobal gABIIntReturn 0
+    end if
+
+    // Stack teardown
+    setglobal gABIStringArg1 ""
+    setglobal gABIStringArg2 ""
+}
+
+Test0NonEquivalenceOperatorString
+{
+    // Stack setup
+    setglobal gLocalTestName "Test0NonEquivalenceOperatorString"
+
+    if gABIStringArg1 != gABIStringArg2
+        setglobal gABIIntReturn 1
+    else
+        setglobal gABIIntReturn 0
+    end if
+
+    // Stack teardown
+    setglobal gABIStringArg1 ""
+    setglobal gABIStringArg2 ""
+}
+
+Test0Comments
+{
+    setglobal gLocalTestName "Test0Comments"
+    
+    // This is a comment.  It shouldn't choke on this.
+    
+    /*
+        This is another comment
+        It has multiple lines   */
+        
+    /* Here is another comment on one line */
+    
+    /* /* Here is comment with an extra comment mark in it */
+    
+    // Here is a comment with a trailing other comment in it */
+    // /* Here is a comment with a nested comment in it */
+    //  That: */ should not terminate the comment
+
+    message "Print a message with a /* comment */ in it\r"
+    message "// Print a commnet message\r"
+
+    setglobal ABIIntReturn 0
+}

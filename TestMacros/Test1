@@ -1,0 +1,723 @@
+include "TestHarness"
+
+
+setglobal INT_MIN   -2147483648
+setglobal INT_MAX    2147483647
+
+// This tests integer behavior
+Test1
+{
+    setglobal gTestName "Test1"
+    call BeginTests
+
+    message "Testing: 1 + 10 = 11 \r"
+    setglobal gLocalTestName "1 + 10 = 11"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   10
+    call Test1IntegerAddition
+    setglobal gABIExpectedIntReturn 11
+    call VerifyResult
+
+    message "Testing: 1 + 10 = 11 (Local)\r"
+    setglobal gLocalTestName "1 + 10 = 11 local"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   10
+    call Test1IntegerAdditionLocal
+    setglobal gABIExpectedIntReturn 11
+    call VerifyResult
+
+    message "Testing: 1 - 10 = -9\r"
+    setglobal gLocalTestName "1 - 10 = -9"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   10
+    call Test1IntegerSubtraction
+    setglobal gABIExpectedIntReturn -9
+    call VerifyResult
+
+    message "Testing: 1 - 10 = -9 (Local)\r"
+    setglobal gLocalTestName "1 - 10 = -9 local"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   10
+    call Test1IntegerSubtractionLocal
+    setglobal gABIExpectedIntReturn -9
+    call VerifyResult
+
+    message "Testing: 10 - 1 = 9\r"
+    setglobal gLocalTestName "10- 1 = 9"
+    setglobal gABIIntArg1   10
+    setglobal gABIIntArg2   1
+    call Test1IntegerSubtraction
+    setglobal gABIExpectedIntReturn 9
+    call VerifyResult
+
+    message "Testing: 10 - 1 = 9 (Local)\r"
+    setglobal gLocalTestName "10 - 1 = 9 local"
+    setglobal gABIIntArg1   10
+    setglobal gABIIntArg2   1
+    call Test1IntegerSubtractionLocal
+    setglobal gABIExpectedIntReturn 9
+    call VerifyResult
+
+    message "Testing: report integer size\r"
+    setglobal gLocalTestName "Test1CalculateIntegerBits"
+    call Test1CalculateIntegerBits
+    setglobal gABIExpectedIntReturn 32
+    call VerifyResult
+
+    message "Testing: report integer signedness\r"
+    setglobal gLocalTestName "Test1IsIntegerSigned"
+    call Test1IsIntegerSigned
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: addition overflow  1 + INT_MAX = INT_MIN \r"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   INT_MAX
+    call Test1IntegerAddition
+    setglobal gABIExpectedIntReturn INT_MIN
+    call VerifyResult
+
+    message "Testing: addition overflow  1 + INT_MAX = INT_MIN (local)\r"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   INT_MAX
+    call Test1IntegerAdditionLocal
+    setglobal gABIExpectedIntReturn INT_MIN
+    call VerifyResult
+
+    message "Testing: subtraction overflow  0 - INT_MIN = INT_MIN \r"
+    setglobal gABIIntArg1   0
+    setglobal gABIIntArg2   INT_MIN
+    call Test1IntegerSubtraction
+    setglobal gABIExpectedIntReturn INT_MIN
+    call VerifyResult
+
+    message "Testing: subtraction overflow  0 - INT_MIN = INT_MIN (local)\r"
+    setglobal gABIIntArg1   0
+    setglobal gABIIntArg2   INT_MIN
+    call Test1IntegerSubtractionLocal
+    setglobal gABIExpectedIntReturn INT_MIN
+    call VerifyResult
+
+    message "Testing: multiplication overflow  INT_MIN * -1 = INT_MIN \r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   -1
+    call Test1IntegerMultiplication
+    setglobal gABIExpectedIntReturn INT_MIN
+    call VerifyResult
+
+    message "Testing: multiplication overflow  INT_MIN * -1 = INT_MIN (local)\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   -1
+    call Test1IntegerMultiplicationLocal
+    setglobal gABIExpectedIntReturn INT_MIN
+    call VerifyResult
+
+    message "Testing: division overflow  INT_MIN / -1 = INT_MIN \r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   -1
+    call Test1IntegerDivision
+    setglobal gABIExpectedIntReturn INT_MIN
+    call VerifyResult
+
+    message "Testing: division overflow  INT_MIN / -1 = INT_MIN (local)\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   -1
+    call Test1IntegerDivisionLocal
+    setglobal gABIExpectedIntReturn INT_MIN
+    call VerifyResult
+
+    // Note on Intel this may crash in SIGFPE or similar div/0 error
+    // If you don't believe a simple division by zero error should take down
+    // the client, you should patch around this
+    message "Testing: division by zero  1 / 0 = INT_MAX \r"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   0
+    call Test1IntegerDivision
+    setglobal gABIExpectedIntReturn 0       // ARM and PowerPC hardware would return INT_MAX here, but DT chose 0
+    call VerifyResult
+
+    // Note on Intel this may crash in SIGFPE or similar div/0 error
+    // If you don't believe a simple division by zero error should take down
+    // the client, you should patch around this
+    message "Testing: division by zero  1 / 0 = INT_MAX (local)\r"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   0
+    call Test1IntegerDivisionLocal
+    setglobal gABIExpectedIntReturn 0       // ARM and PowerPC hardware would return INT_MAX here, but DT chose 0
+    call VerifyResult
+
+    // Note on Intel this may crash in SIGFPE or similar div/0 error
+    // If you don't believe a simple division by zero error should take down
+    // the client, you should patch around this
+    message "Testing: division by zero  -1 / 0 = INT_MIN \r"
+    setglobal gABIIntArg1   -1
+    setglobal gABIIntArg2   0
+    call Test1IntegerDivision
+    setglobal gABIExpectedIntReturn 0       // ARM and PowerPC hardware would return INT_MIN here, but DT chose 0
+    call VerifyResult
+
+    // Note on Intel this may crash in SIGFPE or similar div/0 error
+    // If you don't believe a simple division by zero error should take down
+    // the client, you should patch around this
+    message "Testing: division by zero  -1 / 0 = INT_MIN (local)\r"
+    setglobal gABIIntArg1   -1
+    setglobal gABIIntArg2   0
+    call Test1IntegerDivisionLocal
+    setglobal gABIExpectedIntReturn 0       // ARM and PowerPC hardware would return INT_MIN here, but DT chose 0
+    call VerifyResult
+
+    message "Testing: division overflow in modulus operator INT_MIN % -1 = 0 \r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   -1
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "Testing: division overflow in modulus operator INT_MIN % -1 = 0 (local)\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   -1
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    // Note on Intel this may crash in SIGFPE or similar div/0 error
+    // If you don't believe a simple division by zero error should take down
+    // the client, you should patch around this
+    message "Testing: division by zero in modulus operator 1 % 0 = 1 \r"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   0
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    // Note on Intel this may crash in SIGFPE or similar div/0 error
+    // If you don't believe a simple division by zero error should take down
+    // the client, you should patch around this
+    message "Testing: division by zero in modulus operator 1 % 0 = 1  (local)\r"
+    setglobal gABIIntArg1   1
+    setglobal gABIIntArg2   0
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    // Note on Intel this may crash in SIGFPE or similar div/0 error
+    // If you don't believe a simple division by zero error should take down
+    // the client, you should patch around this
+    message "Testing: division by zero in modulus operator -1 % 0 = -1 \r"
+    setglobal gABIIntArg1   -1
+    setglobal gABIIntArg2   0
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn -1
+    call VerifyResult
+
+    // Note on Intel this may crash in SIGFPE or similar div/0 error
+    // If you don't believe a simple division by zero error should take down
+    // the client, you should patch around this
+    message "Testing: division by zero in modulus operator -1 % 0 = -1 (local)\r"
+    setglobal gABIIntArg1   -1
+    setglobal gABIIntArg2   0
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn -1
+    call VerifyResult
+
+    message "Testing: division rounds towards zero: 3 / 2 = 1 \r"
+    setglobal gABIIntArg1   3
+    setglobal gABIIntArg2   2
+    call Test1IntegerDivision
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: division rounds towards zero: 3 / 2 = 1 (local)\r"
+    setglobal gABIIntArg1   3
+    setglobal gABIIntArg2   2
+    call Test1IntegerDivisionLocal
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: division rounds towards zero: -3 / 2 = -1 \r"
+    setglobal gABIIntArg1   -3
+    setglobal gABIIntArg2   2
+    call Test1IntegerDivision
+    setglobal gABIExpectedIntReturn -1
+    call VerifyResult
+
+    message "Testing: division rounds towards zero: -3 / 2 = -1 (local)\r"
+    setglobal gABIIntArg1   -3
+    setglobal gABIIntArg2   2
+    call Test1IntegerDivisionLocal
+    setglobal gABIExpectedIntReturn -1
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b \r"
+    setglobal gABIIntArg1   3
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b (local)\r"
+    setglobal gABIIntArg1   3
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b \r"
+    setglobal gABIIntArg1   4
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b (local) \r"
+    setglobal gABIIntArg1   4
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b \r"
+    setglobal gABIIntArg1   5
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b (local)\r"
+    setglobal gABIIntArg1   5
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b \r"
+    setglobal gABIIntArg1   -3
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn -1
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b (local)\r"
+    setglobal gABIIntArg1   -3
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn -1
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b \r"
+    setglobal gABIIntArg1   -4
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b (local)\r"
+    setglobal gABIIntArg1   -4
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b \r"
+    setglobal gABIIntArg1   -5
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulus
+    setglobal gABIExpectedIntReturn -1
+    call VerifyResult
+
+    message "Testing: modulus uses formula : a%b = a - (a/b)b (local)\r"
+    setglobal gABIIntArg1   -5
+    setglobal gABIIntArg2   2
+    call Test1IntegerModulusLocal
+    setglobal gABIExpectedIntReturn -1
+    call VerifyResult
+
+    message "Testing: division using enough precision: INT_MIN / (INT_MIN+1) = 1\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   INT_MIN
+    setglobal gABIIntArg2 + 1
+    call Test1IntegerDivision
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: division using enough precision: INT_MIN / (INT_MIN+1) = 1 (local)\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   INT_MIN
+    setglobal gABIIntArg2 + 1
+    call Test1IntegerDivisionLocal
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: division using enough precision: INT_MIN / (INT_MIN) = 1\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   INT_MIN
+    call Test1IntegerDivision
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: division using enough precision: INT_MIN / (INT_MIN) = 1 (local)\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg2   INT_MIN
+    call Test1IntegerDivisionLocal
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Testing: division using enough precision: (INT_MIN+1) / INT_MIN = 0\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg1 + 1
+    setglobal gABIIntArg2   INT_MIN
+    call Test1IntegerDivision
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+    message "Testing: division using enough precision: (INT_MIN+1) / INT_MIN = 0 (local)\r"
+    setglobal gABIIntArg1   INT_MIN
+    setglobal gABIIntArg1 + 1
+    setglobal gABIIntArg2   INT_MIN
+    call Test1IntegerDivisionLocal
+    setglobal gABIExpectedIntReturn 0
+    call VerifyResult
+
+///////////////////////////////////////////
+// String concatenation with + operator  //
+///////////////////////////////////////////
+
+//
+// CAVEAT:  It turns out that some of this is implemented by my DMMTextField.cp, so is
+//          not strictly ClanLord of old doing the work. Clanlord was using some carbon
+//          text routines that had to be replaced for text insertion and setting. I
+//          have yet to find cases where InsertText does non trivial work though. It
+//          always just falls through to SetText.
+//
+
+
+// Simple concatenation
+    message "Testing: setglobal \"a\" + \"b\"\r"
+    setglobal gABIStringArg1   "a"
+    setglobal gABIStringArg2   "b"
+    call Test1StringConcatenation
+    setglobal gABIExpectedStringReturn "ab"
+    call VerifyResult
+
+    message "Testing: set \"a\" + \"b\"\r"
+    setglobal gABIStringArg1   "a"
+    setglobal gABIStringArg2   "b"
+    call Test1StringConcatenationLocal
+    setglobal gABIExpectedStringReturn "ab"
+    call VerifyResult
+
+// Simple concatenation of multichar strings
+    message "Testing: setglobal \"cat\" + \"dog\"\r"
+    setglobal gABIStringArg1   "cat"
+    setglobal gABIStringArg2   "dog"
+    call Test1StringConcatenation
+    setglobal gABIExpectedStringReturn "catdog"
+    call VerifyResult
+
+    message "Testing: set \"cat\" + \"dog\"\r"
+    setglobal gABIStringArg1   "cat"
+    setglobal gABIStringArg2   "dog"
+    call Test1StringConcatenationLocal
+    setglobal gABIExpectedStringReturn "catdog"
+    call VerifyResult
+
+// Simple concatenation with "" as arg2
+    message "Testing: setglobal \"cat\" + \"\"\r"
+    setglobal gABIStringArg1   "cat"
+    setglobal gABIStringArg2   ""
+    call Test1StringConcatenation
+    setglobal gABIExpectedStringReturn "cat"
+    call VerifyResult
+
+    message "Testing: set \"cat\" + \"\"\r"
+    setglobal gABIStringArg1   "cat"
+    setglobal gABIStringArg2   ""
+    call Test1StringConcatenationLocal
+    setglobal gABIExpectedStringReturn "cat"
+    call VerifyResult
+
+    message "Testing: set \"cat\" + \"\\\"\"\r"
+    setglobal gABIStringArg1   "cat"
+    setglobal gABIStringArg2   "\""
+    call Test1StringConcatenationLocal
+    setglobal gABIExpectedStringReturn "cat\""
+    call VerifyResult
+
+// Simple concatenation with "" as arg1
+    message "Testing: setglobal \"\" + \"dog\"\r"
+    setglobal gABIStringArg1   ""
+    setglobal gABIStringArg2   "dog"
+    call Test1StringConcatenation
+    setglobal gABIExpectedStringReturn "dog"
+    call VerifyResult
+
+    message "Testing: set \"\" + \"dog\"\r"
+    setglobal gABIStringArg1   ""
+    setglobal gABIStringArg2   "dog"
+    call Test1StringConcatenationLocal
+    setglobal gABIExpectedStringReturn "dog"
+    call VerifyResult
+
+    message "Testing: set \"\"" + \"dog\"\r"
+    setglobal gABIStringArg1   "\""
+    setglobal gABIStringArg2   "dog"
+    call Test1StringConcatenationLocal
+    setglobal gABIExpectedStringReturn "\"dog"
+    call VerifyResult
+
+// concatenation missing set and setglobal
+    message "Testing: \"a\" + \"b\"\r"
+    setglobal gABIStringArg1   "a"
+    setglobal gABIStringArg2   "b"
+    call Test1StringNotConcatenation
+    setglobal gABIExpectedStringReturn "a"
+    call VerifyResult
+
+    message "Testing: \"cat\" + \"dog\"\r"
+    setglobal gABIStringArg1   "cat"
+    setglobal gABIStringArg2   "dog"
+    call Test1StringNotConcatenation
+    setglobal gABIExpectedStringReturn "cat"
+    call VerifyResult
+
+    message "Testing: \"cat\" + \"\"\r"
+    setglobal gABIStringArg1   "cat"
+    setglobal gABIStringArg2   ""
+    call Test1StringNotConcatenation
+    setglobal gABIExpectedStringReturn "cat"
+    call VerifyResult
+
+    message "Testing:  \"\" + \"dog\"\r"
+    setglobal gABIStringArg1   ""
+    setglobal gABIStringArg2   "dog"
+    call Test1StringNotConcatenation
+    setglobal gABIExpectedStringReturn ""
+    call VerifyResult
+
+    call EndTests
+}
+
+Test1IntegerAddition
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerAddition"
+
+    setglobal gABIIntArg1 + gABIIntArg2
+    setglobal gABIIntReturn gABIIntArg1
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test1IntegerAdditionLocal
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerAddition"
+
+    set var::Test1IntegerAdditionLocal  gABIIntArg1
+    set var::Test1IntegerAdditionLocal + gABIIntArg2
+    setglobal gABIIntReturn var::Test1IntegerAdditionLocal
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test1IntegerSubtraction
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerSubtraction"
+
+    setglobal gABIIntArg1 - gABIIntArg2
+    setglobal gABIIntReturn gABIIntArg1
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test1IntegerSubtractionLocal
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerSubtractionLocal"
+
+    set var::Test1IntegerSubtractionLocal  gABIIntArg1
+    set var::Test1IntegerSubtractionLocal - gABIIntArg2
+    setglobal gABIIntReturn var::Test1IntegerSubtractionLocal
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test1IntegerMultiplication
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerMultiplication"
+
+    setglobal gABIIntArg1 * gABIIntArg2
+    setglobal gABIIntReturn gABIIntArg1
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test1IntegerMultiplicationLocal
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerMultiplicationLocal"
+
+    set var::Test1IntegerMultiplicationLocal  gABIIntArg1
+    set var::Test1IntegerMultiplicationLocal * gABIIntArg2
+    setglobal gABIIntReturn var::Test1IntegerMultiplicationLocal
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+
+Test1IntegerDivision
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerDivision"
+
+    setglobal gABIIntArg1 / gABIIntArg2
+    setglobal gABIIntReturn gABIIntArg1
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test1IntegerDivisionLocal
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerDivisionLocal"
+
+    set var::Test1IntegerDivisionLocal  gABIIntArg1
+    set var::Test1IntegerDivisionLocal / gABIIntArg2
+    setglobal gABIIntReturn var::Test1IntegerDivisionLocal
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+
+Test1IntegerModulus
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerModulus"
+
+    setglobal gABIIntArg1 % gABIIntArg2
+    setglobal gABIIntReturn gABIIntArg1
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test1IntegerModulusLocal
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1IntegerModulusLocal"
+
+    set var::Test1IntegerModulusLocal  gABIIntArg1
+    set var::Test1IntegerModulusLocal % gABIIntArg2
+    setglobal gABIIntReturn var::Test1IntegerModulusLocal
+
+    // Stack teardown
+    setglobal gABIIntArg1 0
+    setglobal gABIIntArg2 0
+}
+
+Test1CalculateIntegerBits
+{
+    setglobal gLocalTestName "Test1CalculateIntegerBits"
+
+    set var::Test1CalculateIntegerBits      1
+    set bitCount::Test1CalculateIntegerBits 0
+    label LoopStart_Test1CalculateIntegerBits
+        if var::Test1CalculateIntegerBits == 0
+            goto LoopExit_Test1CalculateIntegerBits
+        end if
+        
+        set bitCount::Test1CalculateIntegerBits + 1
+        set var::Test1CalculateIntegerBits * 2
+        goto LoopStart_Test1CalculateIntegerBits
+    label LoopExit_Test1CalculateIntegerBits
+    
+    message "Found Integer type to be" bitCount::Test1CalculateIntegerBits "bits\r"
+    setglobal gABIIntReturn bitCount::Test1CalculateIntegerBits
+}
+
+// Assumes 2s complement
+Test1IsIntegerSigned
+{
+    setglobal gLocalTestName "Test1IsIntegerSigned"
+
+    set var::Test1IsIntegerSigned      1
+    label LoopStart_Test1IsIntegerSigned
+        if var::Test1IsIntegerSigned > 0
+            set var::Test1IsIntegerSigned * 2
+            goto LoopStart_Test1IsIntegerSigned
+        end if
+    label LoopExit_Test1IsIntegerSigned
+    
+    if var::Test1IsIntegerSigned < 0
+        message "Found Integer type to be signed\r"
+        setglobal gABIIntReturn 1
+    else
+        message "Found Integer type to be unsigned\r"
+        setglobal gABIIntReturn 0
+    end if
+}
+
+
+Test1StringConcatenation
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1StringConcatenation"
+
+    setglobal gABIStringArg1 + gABIStringArg2
+    setglobal gABIStringReturn gABIStringArg1
+
+    // Stack teardown
+    setglobal gABIStringArg1 ""
+    setglobal gABIStringArg2 ""
+}
+
+
+Test1StringConcatenationLocal
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1StringConcatenation"
+
+    set arg1::Test1StringConcatenationLocal gABIStringArg1
+    set arg2::Test1StringConcatenationLocal gABIStringArg2
+    set arg1::Test1StringConcatenationLocal + arg2::Test1StringConcatenationLocal
+    setglobal gABIStringReturn arg1::Test1StringConcatenationLocal
+
+    // Stack teardown
+    setglobal gABIStringArg1 ""
+    setglobal gABIStringArg2 ""
+}
+
+
+// Does nothing because setglobal is missing
+Test1StringNotConcatenation
+{
+    // Stack setup
+    setglobal gLocalTestName "Test1StringConcatenation"
+
+    /*setglobal*/ gABIStringArg1 + gABIStringArg2
+    setglobal gABIStringReturn gABIStringArg1
+
+    // Stack teardown
+    setglobal gABIStringArg1 ""
+    setglobal gABIStringArg2 ""
+}
+

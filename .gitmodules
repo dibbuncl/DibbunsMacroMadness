@@ -1,0 +1,3 @@
+[submodule "Clanlord"]
+	path = Clanlord
+	url = https://github.com/YappyGM/ClanLordClient.git

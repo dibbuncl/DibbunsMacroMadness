@@ -1,0 +1,366 @@
+include "TestHarness"
+
+//
+//  Test call, label / goto, scope and recursion
+//
+//  BUG:  This test suite reveals that local variables are not local in the original client.
+//        Clieunk has similar behavior. Please see comments below.
+//
+Test2
+{
+    setglobal gTestName "Test2"
+    call BeginTests
+
+    message "Test forward jumping\r"
+    call Test2JumpForward
+    setglobal gABIExpectedIntReturn 1
+    call VerifyResult
+
+    message "Test backward jumping\r"
+    call Test2JumpBackward
+    setglobal gABIExpectedIntReturn 5
+    call VerifyResult
+
+    message "Test recursion\r"
+    setglobal gABIIntArg1   10
+    call Test2Recursion
+    setglobal gABIExpectedStringReturn "rrrrrrrrrr"
+    call VerifyResult
+
+    message "Test local scope\r"
+    call Test2LocalScope
+    setglobal gABIExpectedIntReturn 1   // documented behavior  https://www.deltatao.com/clanlord/macros/manual.html#Variables. See comments for Test2LocalScope below
+    setglobal gABIExpectedIntReturn 2   // actual legacy client behavior
+    call VerifyResult
+
+    message "Test local scope2\r"
+    call Test2LocalScope2
+    setglobal gABIExpectedIntReturn 1   // documented behavior  https://www.deltatao.com/clanlord/macros/manual.html#Variables. See comments for Test2LocalScope below
+    setglobal gABIExpectedIntReturn 2   // actual legacy client behavior
+    call VerifyResult
+
+    message "Test nested functions sharing loop variable name"
+    call Test2LocalScope3
+    setglobal gABIExpectedStringReturn "|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl" // documented behavior  https://www.deltatao.com/clanlord/macros/manual.html#Variables. See comments for Test2LocalScope below
+    setglobal gABIExpectedStringReturn "|abc|efg|ijk"   // actual legacy client behavior due to local scope cross contamination
+    call VerifyResult
+
+    message "Test nested functions using namespaces for local variables"
+    call Test2LocalScope3Namespaced
+    setglobal gABIExpectedStringReturn "|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl"
+    call VerifyResult
+
+    message "Test label scope"
+    call Test2LabelScope
+    setglobal gABIExpectedIntReturn 2
+    call VerifyResult
+    
+    message "Test not random"
+    call TestNotRandom
+    setglobal gABIExpectedStringReturn "H'loi "
+    call VerifyResult
+
+    message "Test not conditional"
+    setglobal gABIStringArg1 "May I drink your beer, please?"
+    call TestNotConditional
+    setglobal gABIExpectedStringReturn "No!"
+    call VerifyResult
+
+/*
+    // This bit of nonsense hangs the legacy clanlord interpreter
+    message "Can Messages be broken by labels?"
+    setglobal gABIStringArg1 "Make me a sandwich"
+    call TestNotAllAMessage
+    setglobal gABIExpectedStringReturn "Make me a sandwich.\r"
+    call VerifyResult
+*/
+
+    call EndTests
+}
+
+
+Test2JumpForward
+{
+    setglobal gLocalTestName "Test2JumpForward"
+    
+    setglobal gABIIntReturn 1
+    goto  label_Test2JumpForward
+    setglobal gABIIntReturn -1
+    label label_Test2JumpForward
+}
+
+Test2JumpBackward
+{
+    setglobal gLocalTestName "Test2JumpBackward"
+
+    setglobal gABIIntReturn 10
+    label label_Test2JumpBackward
+//  {
+        if gABIIntReturn <= 5
+            goto label_Test2JumpBackward2
+        end if
+        setglobal gABIIntReturn - 1
+        goto label_Test2JumpBackward
+//  }
+    label label_Test2JumpBackward2
+}
+
+Test2Recursion
+{
+    setglobal gLocalTestName "Test2Recursion"
+
+    setglobal gABIIntArg1 - 1
+    if gABIIntArg1 > 0
+        call Test2Recursion
+    end if
+    setglobal gABIStringReturn + "r"
+}
+
+/*   This test tests whether local variables are local.
+  
+    BUG:  The documentation is quite clear on what should be happening here
+                https://www.deltatao.com/clanlord/macros/manual.html#Variables
+  
+        **Local Variables**
+  
+        These variables are defined only for the macro they are declared within. You
+        declare them the same as you would a global variable, except they are within
+        a macro (that is, inside the curly braces { } surrounding the macro’s contents).
+  
+    Now, I suppose a legal weasel might make a capital case out of the word within.
+    If funcA calls funcB, maybe we might say funcB is "within" funcA? However, this
+    is not the commonly understood behavior of local variables in computer science,
+    something we should expect should be well known to the C++ code jockeys at DeltaTao.
+    (To be clear, I am not implying DT is unwise. I am implying the original client has
+    a bug, as we shall see in a moment. They would be aware of computer science mores
+    and would not go against them, unless they had a good reason like historical MUD syntax
+    compatibility) To programming nerds, "Within" as a matter of culture and art would be
+    translated as function scope and function scope means only is visible in the function
+    itself, not other things it calls or the things that call it.
+  
+    >The rationale for the consensus design is obvious. If subroutines can quietly modify
+    caller's variables, you are going to end up with bugs. That would make it really hard
+    to write libraries, for example. If two different authors are fond of returning the
+    result in a variable called "result" or indexing their loops with a variable called "i",
+    then we are going to have a great deal of ++unfun in certain cases where one function
+    calls another in that loop. Typically, this is the reason why we _have_ local and global
+    variables in the first place: to make very clear what might be changed by anyone and what
+    is not going to be. The local variable is your safe place to stick stuff that nobody else
+    knows about or can monkey with. In a world of code written by a million monkeys, local
+    variables are the one thing known to work, because you are the only monkey who can see it.
+  
+    ...except in Clanlord. In the legacy client, local variables have (mostly?) global
+    scope. (Clieunk is found to be bug for bug compatible with the original in this regards.)
+    If you call a subroutine and it uses a local variable with the same name as the callers
+    local variable, the subroutine will inherit the value of the local variable from the caller
+    and when it modifies it, the change is reflected in the callers local variable, presumably
+    because they are the same variable!
+  
+    As mentioned earlier, I, Dibbun, think this is a bug in the original implementation, which
+    we will codify here in perpetuity, because fixing it "might" (it probably wont, but it "might")
+    break some foolish code that relies on this behavior. Since DT no longer maintains or
+    releases a Clanlord client, the opportunity to effect a fix has passed from the realm
+    of possibility (for DT), so in this case, the future is unusually clear. We must put
+    up with it and try to maintain compatibility. If they decided to roll a new client, they
+    might fix it, but honestly I think they would be better off making use of something like
+    javascript, in particular because Apple doesn't allow other scripting languages on the App
+    Store, including this one. I've yet to see a page of macros that can't be rewritten in a
+    day, by AI if necessary. Javascript is well understood by a lot of people. It isn't that many
+    people or that much code. There is very little installed base to protect.
+  
+    **How to respond to this?** Right thinking macro developers will tag their local
+    variables with a name space unique to the function so local variables have local
+    scope as best as might be imagined. Since function names must be unique, the namespace
+    if you modify the variable name with your function name, your variable name should be
+    unique. In this work, we use the convention <localVarName>::<funcName> for local
+    variable names, so they actually are local.
+    
+    > C++ would have this in the other order, <namespace>::<localVarName>. In practice, this
+    works fine for C++ because local variables are almost never namespaced. You don't need to
+    because they are local. I find that if we have to namespace our local variables and the
+    namespaces are first, then our code gets really hard to read, because all the variables
+    look the same. Swapping the order of the namespace and name makes the code more readable.
+    It is even more readable if you abbreviate the functionName, but this may reduce uniqueness.
+    
+    If you actually want subroutines to modify caller's variables, use a global. It is common
+    among programming nerds to prefix globals with the letter g (e.g. "gMyGlobalVariable") so
+    that they are obviously a dangerous global wherever they are used.
+*/
+Test2LocalScope
+{
+    setglobal gLocalTestName "Test2LocalScope"
+
+    set localVar 1
+    call Test2LocalScopeAux
+    setglobal gABIIntReturn localVar
+}
+
+Test2LocalScopeAux
+{
+    set localVar + 1
+}
+
+// Trivial modification of Test2LocalScope.
+// BUG: See description of Test2LocalScope above
+Test2LocalScope2
+{
+    setglobal gLocalTestName "Test2LocalScope2"
+
+    set localVar 1
+    call Test2LocalScopeAux2
+    setglobal gABIIntReturn localVar
+}
+
+Test2LocalScopeAux2
+{
+    set localVar 1
+    set localVar + 1
+}
+
+// Test nested loops that share variable names across function scopes.
+// BUG: See description of Test2LocalScope above
+Test2LocalScope3
+{
+    setglobal gLocalTestName "Test2LocalScope3"
+
+    set loopVar 0
+    label LoopStart_Test2LocalScope3
+//  {
+        setglobal gABIStringReturn + "|"
+        setglobal gABIIntArg1 loopVar
+        call Test2LocalScope3_subroutine
+        set loopVar + 1
+        if loopVar < 10
+            goto LoopStart_Test2LocalScope3
+        end if
+//  }
+
+    //stack cleanup
+    setglobal gABIIntArg1 0
+}
+
+Test2LocalScope3_subroutine
+{
+    set string "a b c d e f g h i j k l m n o p q r s t u v w x y z"
+    set loopVar gABIIntArg1         // name is the same as the calling routine
+    
+    set loopStop loopVar
+    set loopStop + 3
+    
+    label LoopStart_Test2LocalScope3_subroutine
+//  {
+        setglobal gABIStringReturn + string.word[loopVar]
+        
+        set loopVar + 1
+        if loopVar < loopStop
+            goto LoopStart_Test2LocalScope3_subroutine
+        end if
+//  }
+}
+
+// This is the same as Test2LocalScope3 above, except we namespace the local variables
+Test2LocalScope3Namespaced
+{
+    setglobal gLocalTestName "Test2LocalScope3Namespaced"
+
+    set loopVar::Test2LocalScope3Namespaced 0
+    label LoopStart_Test2LocalScope3
+//  {
+        setglobal gABIStringReturn + "|"
+        setglobal gABIIntArg1 loopVar::Test2LocalScope3Namespaced
+        call Test2LocalScope3_subroutineNamespaced
+        set loopVar::Test2LocalScope3Namespaced + 1
+        if loopVar::Test2LocalScope3Namespaced < 10
+            goto LoopStart_Test2LocalScope3
+        end if
+//  }
+
+    //stack cleanup
+    setglobal gABIIntArg1 0
+}
+
+Test2LocalScope3_subroutineNamespaced
+{
+    set string "a b c d e f g h i j k l m n o p q r s t u v w x y z"
+    set loopVar::Test2LocalScope3_subroutineNamespaced gABIIntArg1         // name is the same as the calling routine
+    
+    set loopStop::Test2LocalScope3_subroutineNamespaced loopVar::Test2LocalScope3_subroutineNamespaced
+    set loopStop::Test2LocalScope3_subroutineNamespaced + 3
+    
+    label LoopStart_Test2LocalScope3_subroutineNamespaced
+//  {
+        setglobal gABIStringReturn + string.word[loopVar::Test2LocalScope3_subroutineNamespaced]
+        
+        set loopVar::Test2LocalScope3_subroutineNamespaced + 1
+        if loopVar::Test2LocalScope3_subroutineNamespaced < loopStop::Test2LocalScope3_subroutineNamespaced
+            goto LoopStart_Test2LocalScope3_subroutineNamespaced
+        end if
+//  }
+}
+
+Test2LabelScopeHelper
+{
+    label missingLabel
+    setglobal gABIIntReturn 1
+}
+
+Test2LabelScope
+{
+    setglobal gLocalTestName "Test2LabelScope"
+    setglobal gABIIntReturn 1
+    goto missingLabel           //Legacy client:     \245 MACRO Execution Error label missingLabel not found in the current macro.
+    setglobal gABIIntReturn 2
+}
+
+TestNotRandom
+{
+  setglobal gLocalTestName "TestNotRandom"
+
+  goto label_IamASylvan     // Legacy client: \245 MACRO Execution Error label label_IamASylvan not found in the current macro.
+                            // but seems to work anyway?
+  
+  random
+    setglobal gABIStringReturn "Greetings "
+  or
+    label label_IamASylvan
+    setglobal gABIStringReturn "H'loi "
+  or
+    setglobal gABIStringReturn "Good day "
+  end random
+  
+}
+
+TestNotConditional
+{
+  setglobal gLocalTestName "TestNotRandom"
+
+  set lastWordIndex::TestNotConditional  gABIStringArg1.num_words
+  set lastWordIndex::TestNotConditional - 1
+
+  goto label_IDontCareWhatYouSay
+
+  if gABIStringArg1.word[lastWordIndex::TestNotConditional] == "please?"
+    setglobal gABIStringReturn  "Yes :-)"
+  else
+    label label_IDontCareWhatYouSay
+    setglobal gABIStringReturn  "No!"
+  end if
+  
+  setglobal gABIStringArg1 ""
+}
+
+// Test to see if commands can be broken by a label / goto
+//  BUG: This correctly issues the command but then hangs the interpreter at the line after the "\r"
+TestNotAllAMessage
+{
+    setglobal gLocalTestName "TestNotAllAMessage"
+
+    goto Impolite
+    
+    "Kind Sir,"
+    label Impolite
+    gABIStringArg1
+    ".\r"
+    
+    setglobal gABIStringArg1 ""
+}

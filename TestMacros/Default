@@ -1,0 +1,92 @@
+
+include "Test0"
+include "Test1"
+include "Test2"
+include "Test3"
+include "Test4"
+include "Test5"
+include "Test6"
+include "Test7"
+include "Test8"
+include "Test9"
+
+
+@login
+{
+	message "Default macro loaded\r"
+}
+
+"/RunAllTests"
+{
+    setglobal gTestName "RunAllTests"
+    call BeginTests
+
+	call Test0
+	call Test1
+	call Test2
+	call Test3
+	call Test4
+	call Test5
+	call Test6
+	call Test7
+	call Test8
+	call Test9
+    
+    call EndTests
+}
+
+Numpad-0
+{
+    call Test0
+}
+
+Numpad-1
+{
+    call Test1
+}
+
+Numpad-2
+{
+    call Test2
+}
+
+/*
+Numpad-3
+{
+    call Test3
+}
+
+Numpad-4
+{
+    call Test4
+}
+
+Numpad-5
+{
+    call Test5
+}
+
+Numpad-6
+{
+    call Test6
+}
+
+Numpad-7
+{
+    call Test7
+}
+
+Numpad-8
+{
+    call Test8
+}
+
+Numpad-9
+{
+    call Test9
+}
+*/
+
+
+
+
